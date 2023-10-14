@@ -1,10 +1,12 @@
-use lambda_http::{Response, Body};
-use tracing_subscriber;
+use lambda_http::{run, service_fn, Body, Error, IntoResponse, Request, RequestExt, Response};
+use serde::Serialize;
+use serde_json::json;
 
 struct CarList {
     cars: Vec<Car>,
 }
 
+#[derive(Serialize)]
 struct Car {
     name: String,
     price: i32,
@@ -37,7 +39,7 @@ fn get_car_from_name<'a>(car_name: &'a str, car_list: &'a CarList) -> Option<&'a
 }
 
 async fn build_success_response(car: &Car) -> Response<Body> {
-    panic!("")
+    json!(car).into_response().await
 }
 
 fn main() {
@@ -63,11 +65,20 @@ mod tests {
 
     #[tokio::test]
     async fn build_success_response_test() {
-        let test_car = Car { name: String::from("test_car"), price: 100_000};
+        let test_car = Car {
+            name: String::from("test_car"),
+            price: 100_000,
+        };
         let result = build_success_response(&test_car).await;
         let (parts, body) = result.into_parts();
         assert_eq!(200, parts.status);
-        assert_eq!("application/json", parts.headers.get("content-type").unwrap());
-        
+        assert_eq!(
+            "application/json",
+            parts.headers.get("content-type").unwrap()
+        );
+        assert_eq!(
+            "{\"name\":\"test_car\",\"price\":100000}",
+            String::from_utf8(body.to_ascii_lowercase()).unwrap()
+        )
     }
 }
