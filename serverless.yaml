@@ -1,0 +1,24 @@
+service: rust-lambda
+
+provider:
+  name: aws
+  runtime: provided.al2
+
+package:
+  exclude: 
+    - ./**
+  include:
+    - ./bootstrap
+
+
+functions:
+  car-rust:
+    handler: bootstrap
+    events: 
+      - http:
+        path: /car/{car_name}/price
+        methods: GET
+        request:
+          parameters: 
+            paths:
+              car_name: true
